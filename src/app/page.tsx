@@ -1,113 +1,162 @@
+/* eslint-disable react/jsx-no-comment-textnodes */
+"use client"
+import { useEffect } from "react";
+import { setLayers, initMap } from "../components/map";
 import Image from 'next/image'
+import logo from "../../public/acme-logo.svg";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 export default function Home() {
+
+  useEffect(() => {
+    initView()
+  }, [])
+
+  const COMPANY_BASE_API_URL = process.env.VITE_COMPANY_API_BASE_URL;
+
+
+  async function login() {
+    const username = (
+      document.querySelector('input[name="username"]') as HTMLInputElement
+    ).value;
+    const password = (
+      document.querySelector('input[name="password"]') as HTMLInputElement
+    ).value;
+
+    console.log(JSON.stringify({ username, password }));
+
+    const loginResp = await fetch(`${COMPANY_BASE_API_URL}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const { token, error } = await loginResp.json();
+    if (error) {
+      alert(error);
+      return;
+    }
+
+    const tokenResp = await fetch(`${COMPANY_BASE_API_URL}/carto-token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token,
+      },
+    });
+
+    const { token: cartoToken, queries, group, error: tokenError } = await tokenResp.json();
+    console.log('token', cartoToken, 'queries', queries, 'group', group, 'tokenError', tokenError);
+    if (tokenError) {
+      alert(tokenError);
+      return;
+    }
+
+    document.querySelector<HTMLDivElement>("#login-container")!.innerHTML = `
+      <div class="profile">
+        ${username} - <span>${group}</span>
+        <select id="query-select">
+          ${queries.map((query: any, index: number) => `<option key={${index}} value="${index}">${query.id}</option>`)}
+        </select>
+        <button type="submit" id="logout" class="button">Logout</button>
+      </div>
+    `;
+    document.getElementById("logout")?.addEventListener("click", initView);
+
+    document.getElementById("query-select")?.addEventListener("change", (event: any) => {
+      console.log(event?.target?.value);
+      setLayers(queries[event?.target?.value], cartoToken)
+    });
+
+    setLayers(queries[0], cartoToken);
+  }
+
+  function addLoginForm() {
+    document.querySelector<HTMLDivElement>("#login-container")!.innerHTML = `
+        <input type="text" placeholder="Username" name="username" value="user.boston@acme.com">
+        <input type="password" placeholder="Password" name="password" value="boston">
+        
+  <!--      <input type="text" placeholder="Username" name="username" value="user.ny@acme.com">-->
+  <!--      <input type="password" placeholder="Password" name="password" value="ny">-->
+        
+        <button type="submit" id="login" class="button button--primary">Login</button>
+    `;
+    document.getElementById("login")?.addEventListener("click", login);
+  }
+
+  function initView() {
+    document.getElementById("baseSetores")?.addEventListener("click", setMyLayers);
+    addLoginForm();
+    initMap();
+  }
+
+  async function setMyLayers() {
+    console.log('asdasdasd');
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6Imx1Y2FzIiwiaWF0IjoxNjk0NzM4NTk5LCJleHAiOjE2OTQ3ODE3OTl9.fjQUqm1InObGnvKJIxPBSjtBQD-4RfbzlyRXegexIpw';
+    setLayers([
+      {
+        connection_name: 'teste',
+        source: 'SELECT * FROM bigquerytest-328219.teste_gdm.municipio_V02 WHERE TRUE ',
+        id: 'municipio_V02'
+      }], token);
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
+    <main>
+      <div className="flex justify-center bg-zinc-800 text-white h-screen">
+        <div className="container">
+          <header className="header">
             <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+              src={logo}
+              height="32"
+              width="32"
+              alt="ACME"
             />
-          </a>
+            <div className="header__info" id="login-container"></div>
+          </header>
+
+          <div className="sidebar">
+            <ul>
+              <li>
+                <a href="/" id="baseSetores">
+                  Base de Setores censitários
+                  - Upload base pop M, F, T (Pietro)
+                  -  exib. mapas carto setor
+                  -  carregar pop na carto do setor
+                  -  indicador % F e M no setor
+                  -  filtrar pop na carto do setor
+                </a>
+              </li>
+              <li>
+                <a href="/">Raio</a>
+              </li>
+              <li>
+                <a href="/">Polígono (desenho a mão livre)</a>
+              </li>
+              <li>
+                <a href="/">Filtrar Área</a>
+              </li>
+              <li> 
+                <a href="/">Filtrar Ponto</a>
+              </li>
+              <li>
+                <a href="/">Rota</a>
+              </li>
+              <li>
+                <a href="/">Cálculo de distância</a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="content">
+            <div id="map"></div> 
+            <canvas id="deck-canvas"></canvas>
+          </div>
         </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
       </div>
     </main>
   )
 }
+
