@@ -110,14 +110,14 @@ export default function Home() {
           <header className="header">
             <Image
               src={logo}
-              height="32"
-              width="32"
+              height="70"
+              width="70"
               alt="ACME"
             />
             <div className="header__info" id="login-container"></div>
           </header>
 
-          <div className="sidebar">
+          {/* <div className="sidebar">
             <ul>
               <li>
                 <a href="/" id="baseSetores">
@@ -148,7 +148,7 @@ export default function Home() {
                 <a href="/">Cálculo de distância</a>
               </li>
             </ul>
-          </div>
+          </div> */}
 
           <div className="content">
             <div id="map"></div> 

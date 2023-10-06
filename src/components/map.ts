@@ -40,12 +40,14 @@ const LAYERS_STYLES:any = {
 
 export function initMap() {
   // Create the Basemap
-  basemap = new maplibregl.Map({
+  basemap = new maplibregl.Map(
+    {
     container: 'map',
     style: BASEMAP.VOYAGER,
     center: [-74.5, 40],
     zoom: 9
-  })
+  }
+  )
 
   if (deckgl) {
     deckgl.finalize();
