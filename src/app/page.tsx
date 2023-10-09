@@ -5,6 +5,7 @@ import { setLayers, initMap } from "../components/map";
 import Image from 'next/image'
 import logo from "../../public/acme-logo.svg";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "../style/style.css"
 
 export default function Home() {
 
@@ -116,39 +117,6 @@ export default function Home() {
             />
             <div className="header__info" id="login-container"></div>
           </header>
-
-          {/* <div className="sidebar">
-            <ul>
-              <li>
-                <a href="/" id="baseSetores">
-                  Base de Setores censitários
-                  - Upload base pop M, F, T (Pietro)
-                  -  exib. mapas carto setor
-                  -  carregar pop na carto do setor
-                  -  indicador % F e M no setor
-                  -  filtrar pop na carto do setor
-                </a>
-              </li>
-              <li>
-                <a href="/">Raio</a>
-              </li>
-              <li>
-                <a href="/">Polígono (desenho a mão livre)</a>
-              </li>
-              <li>
-                <a href="/">Filtrar Área</a>
-              </li>
-              <li> 
-                <a href="/">Filtrar Ponto</a>
-              </li>
-              <li>
-                <a href="/">Rota</a>
-              </li>
-              <li>
-                <a href="/">Cálculo de distância</a>
-              </li>
-            </ul>
-          </div> */}
 
           <div className="content">
             <div id="map"></div> 

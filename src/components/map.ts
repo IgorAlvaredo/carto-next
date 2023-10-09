@@ -1,14 +1,12 @@
 import maplibregl from 'maplibre-gl'
 import { Deck } from '@deck.gl/core/typed'
-import {
-  BASEMAP,
-  CartoLayer,
-  setDefaultCredentials,
-  MAP_TYPES
-} from '@deck.gl/carto/typed'
+import { BASEMAP, CartoLayer,setDefaultCredentials,MAP_TYPES,colorBins } from '@deck.gl/carto/typed'
 
 let deckgl: Deck | null = null
 let basemap: any = null
+
+// Domain
+const DOMAIN_BUCKETS = [1, 500, 5000, 50000, 100000, 200000]
 
 const INITIAL_VIEW_STATE = {
   latitude: -14.8780831,
@@ -32,22 +30,28 @@ const LAYERS_STYLES:any = {
   },
   censo2010pessoas1_estimativa_muni: {
     pointRadiusMinPixels: 2,
-    getFillColor: [224, 247, 229, 0],
-    // getLineWidth: 4,
-    // lineWidthUnits: 'pixels'
+    getFillColor: colorBins({
+      attr: 'pop',
+      domain: DOMAIN_BUCKETS,
+      colors: 'PurpOr'
+    }),
+    lineWidthMinPixels: 0.5,
+    lineWidthUnits: 'pixels'
+  },
+  setor_censitario: {
+    pointRadiusMinPixels: 2,
+    getFillColor: [200,0,128]
   }
 }
 
 export function initMap() {
   // Create the Basemap
-  basemap = new maplibregl.Map(
-    {
+  basemap = new maplibregl.Map({
     container: 'map',
     style: BASEMAP.VOYAGER,
     center: [-74.5, 40],
     zoom: 9
-  }
-  )
+  })
 
   if (deckgl) {
     deckgl.finalize();
@@ -84,7 +88,7 @@ export function setLayers(query: any, accessToken: string) {
         data: query.source,
         pickable: true,
         onHover: ({object}) => object,
-        getTooltip: (object:any) => object,
+        getTooltip: ({object}:any) => object,
         ...LAYERS_STYLES[query.id]
       })
     );
